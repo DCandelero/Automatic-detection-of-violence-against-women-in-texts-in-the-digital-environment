@@ -1,3 +1,9 @@
 
 # virtual env
 env
+
+# ignore module donfig
+*__pycache__
+
+# Ignore secret files
+.env
