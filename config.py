@@ -1,0 +1,13 @@
+from pathlib import Path
+
+PROJ_PATH = Path(r'C:\Users\DCandelero\Documents\MBA - USP(Data Analytics)\MBA_TCC')
+
+
+DATA_PATH = PROJ_PATH / 'data'
+DATA_PATH_RAW = DATA_PATH / 'raw'
+DATA_PATH_RAW_TEXTS = DATA_PATH_RAW / 'texts'
+DATA_PATH_RAW_IMAGES = DATA_PATH_RAW / 'images'
+DATA_PATH_WRANGLE = DATA_PATH / 'wrangle'
+DATA_PATH_WRANGLE_TEXTS = DATA_PATH_WRANGLE / 'texts'
+DATA_PATH_WRANGLE_IMAGES = DATA_PATH_WRANGLE / 'images'
+
