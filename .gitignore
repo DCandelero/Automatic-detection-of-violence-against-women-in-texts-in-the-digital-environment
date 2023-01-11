@@ -7,3 +7,7 @@ env
 
 # Ignore secret files
 .env
+
+data/raw/images/*
+data/raw/texts/*
+
