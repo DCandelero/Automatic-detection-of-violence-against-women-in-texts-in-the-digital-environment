@@ -8,6 +8,8 @@ env
 # Ignore secret files
 .env
 
+# ignore extracted files
 data/raw/images/*
 data/raw/texts/*
+dataset/*
 
