@@ -2,7 +2,7 @@ import streamlit as st
 
 import sys
 sys.path.append('../data_scrap')
-from data_scrap import extract_tweets, get_extracted_text
+from data_scrap import extract_tweets, get_extracted_text, delete_extracted_text
 
 # Streamlit page config
 st.set_page_config(page_title='dvaw_annotation', page_icon=':violence')
@@ -42,12 +42,27 @@ extract_tab.header('Extração e anotação')
 extract_tab.write('Essa página tem como intuito facilitar a extração e anotação de textos que \
             contenham qualquer tipo de violência contra mulheres.' )
 extract_tab.code(get_extracted_text())
-# text_contain_vaw = extract_tab.select_slider(
-#     label='O texto acima possuí algum tipo de violência contra mulheres?',
-#     options =['Não', 'Sim'],
-#     value='Não',
-#     key='extract_tab'
-# )
+text_contain_vaw = extract_tab.select_slider(
+    label='O texto acima possuí algum tipo de violência contra mulheres?',
+    options =['Não', 'Sim', 'Somente uma parte'],
+    value='Não',
+    key='extract_tab'
+)
+if text_contain_vaw == 'Sim':
+    extracted_agression_phrase = get_extracted_text()
+elif text_contain_vaw == 'Somente uma parte':
+    extracted_agression_phrase = extract_tab.text_input(
+        label='Cole aqui a parte em que contém a agressão',
+        placeholder='Ninguém vai acreditar em você')
+else:
+    extracted_agression_phrase = ''
+next_text = extract_tab.button('Próximo texto')
+if next_text:
+    if extracted_agression_phrase:
+        print(extracted_agression_phrase)
+    
+    delete_extracted_text()
+
 extract_tab.markdown('*Todos textos que possuirem violência direcionada as mulheres serão utilizadas \
     para treino do algoritmo de machine learning*')
 extract_tab.markdown('---')
