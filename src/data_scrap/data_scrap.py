@@ -76,14 +76,14 @@ def extract_tweets(extract_keyword:str):
                                 extract_keyword, 
                                 tweet_mode='extended', 
                                 lang='pt', 
-                                count=2).pages(3):
+                                count=1).pages(5):
         tweets_pages.append(status)
 
     # Read tweets
     for page in tweets_pages:
         for tweet in page:
             save_tweet_text(tweet)
-            print(tweet.full_text)
+            # print(tweet.full_text)
 
             save_tweet_image(tweet)
 
@@ -94,16 +94,30 @@ def extract_tweets(extract_keyword:str):
                 break
 
 
-def get_extracted_text():
-    extracted_text_list = os.listdir(config.DATA_PATH_RAW_TEXTS)
+def get_extracted_text(folder_path:str):
+    extracted_text_list = os.listdir(folder_path)
 
     if extracted_text_list:
-        fname = os.path.join(config.DATA_PATH_RAW_TEXTS, extracted_text_list[0])
+        fname = os.path.join(folder_path, extracted_text_list[0])
 
         extracted_text = ''
         with open(fname, 'r', encoding="utf8") as text_file:
             extracted_text = text_file.read()
 
-        return extracted_text
+        return extracted_text, fname
     else:
-        return 'Extraia mais textos'
+        return 'Extraia mais textos', ''
+
+def delete_extracted_text(folder_path:str):
+    extracted_text_list = os.listdir(folder_path)
+
+    if extracted_text_list:
+        fname = os.path.join(folder_path, extracted_text_list[0])
+
+        os.remove(fname)
+
+def save_extracted_text(data_str:str, folder_path:str, file_name:str):
+    fname = os.path.join(folder_path, file_name)
+
+    with open(fname, 'w', encoding="utf8") as text_file:
+        text_file.write(data_str)
