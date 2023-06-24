@@ -11,5 +11,7 @@ env
 # ignore extracted files
 data/raw/images/*
 data/raw/texts/*
+data/raw/tweets/*
+data/wrangle/tweets/*
 dataset/*
 
