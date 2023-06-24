@@ -2,7 +2,9 @@ import os
 import sys
 import tweepy
 import requests
+import pandas as pd
 from dotenv import load_dotenv
+import pickle
 
 sys.path.append('../../')
 import config
@@ -44,6 +46,38 @@ def save_tweet_text(tweet:object, text_type='') -> None:
 
     return None
 
+def save_tweets_information(tweets:list, keywords_to_extract:list=None, save_tweet:bool=True):
+    tweet_columns = ['id', 'text', 'lang', 'keywords_extraction','created_at','user_id','user_name','user_screen_name','user_profile_image_url',
+                                 'user_created_at','place_id','place_type','place_name','country','country_code','coordinates']
+    tweet_df = pd.DataFrame(columns=tweet_columns)
+    for tweet in tweets:
+        tweet_data = {'id': tweet.id, 'text': tweet.full_text, 'lang': tweet.lang,'keywords_extraction': keywords_to_extract,
+                      'created_at': tweet.created_at, 'user_id': tweet.user.id_str, 'user_name': tweet.user.name, 
+                      'user_screen_name': tweet.user.screen_name, 'user_profile_image_url': tweet.user.profile_image_url, 
+                      'user_created_at': tweet.user.created_at, 'place_id': getattr(tweet.place, 'id', None), 
+                      'place_type': getattr(tweet.place, 'place_type', None), 
+                      'place_name': getattr(tweet.place,'name', None), 'country': getattr(tweet.place,'country', None), 
+                      'country_code': getattr(tweet.place,'country_code', None), 
+                      'coordinates': getattr(getattr(tweet.place,'bounding_box', None), 'coordinates', None)}
+        tweet_df = tweet_df.append(tweet_data, ignore_index = True)
+
+        # Save tweet
+        if save_tweet:
+            fname = os.path.join(config.DATA_PATH_RAW_TWEETS, str(tweet.id)+'.pkl')
+            with open(fname, 'wb') as file:
+                pickle.dump(tweet, file)
+                print(f'Object successfully saved to "{fname}"')
+    
+    extracted_tweets_path = os.path.join(config.DATA_PATH_WRANGLE_TWEETS, 'extracted_tweets.parquet')
+    if os.path.exists(extracted_tweets_path):
+        tweet_df.to_parquet(extracted_tweets_path, engine='fastparquet', append=True)
+    else:
+        tweet_df.to_parquet(extracted_tweets_path, engine='fastparquet')
+    
+    last_extraction_tweets_path = os.path.join(config.DATA_PATH_WRANGLE_TWEETS, 'last_extraction_tweets.parquet')
+    tweet_df.to_parquet(last_extraction_tweets_path)
+
+
 def DownloadFile(url:str, path_to_save:str) -> None:
     response = requests.get(url)
 
@@ -68,23 +102,33 @@ def save_tweet_image(tweet:object) -> None:
         print('Unable to read medias from tweet {}'.format(tweet_id))
         print("=====")
 
-def extract_tweets(extract_keyword:str):
+def extract_tweets(to_extract, place:str=''):
     api = set_twitter_access()
+
+    query = ""
+    if place:
+        query += f'place:{place} AND '
+
+    if type(to_extract) is list:
+        keywords_query = ' OR '.join(to_extract)
+        query += f'({keywords_query})'
+    else:
+        query += to_extract
     
     tweets_pages = []
     for status in tweepy.Cursor(api.search_tweets,
-                                extract_keyword, 
+                                query, 
                                 tweet_mode='extended', 
                                 lang='pt', 
                                 count=1).pages(5):
         tweets_pages.append(status)
 
     # Read tweets
+    tweets = []
     for page in tweets_pages:
         for tweet in page:
+            tweets.append(tweet)
             save_tweet_text(tweet)
-            # print(tweet.full_text)
-
             save_tweet_image(tweet)
 
             if tweet.coordinates is not None:
@@ -92,6 +136,7 @@ def extract_tweets(extract_keyword:str):
                 print(tweet.geo)
                 print(tweet.contributors)
                 break
+    save_tweets_information(tweets, to_extract)
 
 
 def get_extracted_text(folder_path:str):
