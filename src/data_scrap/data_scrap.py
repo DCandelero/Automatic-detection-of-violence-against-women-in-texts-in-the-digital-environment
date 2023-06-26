@@ -102,7 +102,8 @@ def save_tweet_image(tweet:object) -> None:
         print('Unable to read medias from tweet {}'.format(tweet_id))
         print("=====")
 
-def extract_tweets(to_extract, place:str=''):
+def extract_tweets(to_extract, place:str='', info_to_save:str='All'):
+    # info_to_save can be, 'All', 'Tweet', 'Text' or 'Image'
     api = set_twitter_access()
 
     query = ""
@@ -128,15 +129,18 @@ def extract_tweets(to_extract, place:str=''):
     for page in tweets_pages:
         for tweet in page:
             tweets.append(tweet)
-            save_tweet_text(tweet)
-            save_tweet_image(tweet)
+            if info_to_save in ['Text', 'All']:
+                save_tweet_text(tweet)
+            if info_to_save in ['Image', 'All']:
+                save_tweet_image(tweet)
 
             if tweet.coordinates is not None:
                 print(tweet.coordinates)
                 print(tweet.geo)
                 print(tweet.contributors)
                 break
-    save_tweets_information(tweets, to_extract)
+    if info_to_save in ['Tweet', 'All']:
+        save_tweets_information(tweets, to_extract)
 
 
 def get_extracted_text(folder_path:str):

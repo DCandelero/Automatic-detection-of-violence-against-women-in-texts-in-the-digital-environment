@@ -6,9 +6,11 @@ sys.path.append('../ml_text')
 import config
 from data_scrap import extract_tweets
 from predict import predict_text
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import streamlit as st
-from file_utils import get_extracted_text, delete_extracted_text, save_extracted_text, get_test_or_train_path
+from file_utils import get_extracted_tweets, save_extracted_tweet, get_test_or_train_path, delete_extracted_tweet
 
 # Streamlit page config
 st.set_page_config(page_title='dvaw_annotation', page_icon=':violence')
@@ -36,7 +38,7 @@ else:
         placeholder='Ninguém vai acreditar em você')
 extract_text = st.sidebar.button('Extrair')
 if extract_text:
-    extract_tweets(extract_keyword, info_to_save='Text')
+    extract_tweets(extract_keyword, info_to_save='Tweet')
 
 # Body (extract_tab) =======================================================================================================
 st.title('Análise de texto')
@@ -49,8 +51,9 @@ extract_tab.write('Essa página tem como intuito facilitar a extração e anota�
 extract_tab.markdown('---')
 
 # Section 2
-extracted_agression_phrase, extracted_fname = get_extracted_text(config.DATA_PATH_RAW_TEXTS)
-extract_tab.code(extracted_agression_phrase)
+last_extraction_tweets = os.path.join(config.DATA_PATH_WRANGLE_TWEETS, 'last_extraction_tweets.parquet')
+tweet, n_of_extracted_tweets_left = get_extracted_tweets(last_extraction_tweets)
+extract_tab.code(tweet['text'])
 text_contain_vaw = extract_tab.radio(
     label='O texto acima possuí algum tipo de violência contra mulheres?',
     options =['Não', 'Somente uma parte', 'Sim', 'Descartar frase'],
@@ -58,23 +61,23 @@ text_contain_vaw = extract_tab.radio(
     horizontal=True
 )
 if text_contain_vaw == 'Somente uma parte':
-    extracted_agression_phrase = extract_tab.text_input(
+    tweet['text'] = extract_tab.text_input(
         label='Cole aqui a parte em que contém a agressão',
         placeholder='Ninguém vai acreditar em você')
 
-if len(os.listdir(config.DATA_PATH_RAW_TEXTS)) > 0:
+if n_of_extracted_tweets_left > 0:
     next_text = extract_tab.button('Próximo texto')
     if next_text:  
-        folder_path = get_test_or_train_path(config.DATASET_TEXTS_TRAIN, 
-                                             config.DATASET_TEXTS_TEST, 
-                                             percentage_for_test=30)
+        file_path = get_test_or_train_path(config.DATASET_TWEETS_TRAIN_FILE,
+                                            config.DATASET_TWEETS_TEST_FILE,
+                                            percentage_for_test=30)
         if text_contain_vaw == 'Não':
-            folder_path = os.path.join(folder_path, 'non_vaw')
+            tweet['label'] = 0
         else:
-            folder_path = os.path.join(folder_path, 'vaw')
+            tweet['label'] = 1
         if text_contain_vaw != 'Descartar frase':
-            save_extracted_text(extracted_agression_phrase, folder_path, extracted_fname)
-        delete_extracted_text(config.DATA_PATH_RAW_TEXTS)
+            save_extracted_tweet(tweet, file_path)
+        delete_extracted_tweet(last_extraction_tweets)
         st.experimental_rerun()
 extract_tab.markdown('---')
 
@@ -94,7 +97,7 @@ predict_tab.markdown('---')
 predict_tab.subheader('Digite ou extraia uma frase para o modelo identificar se há ou não violência contra mulheres.')
 text_to_predict = predict_tab.text_input(
         label='Digite uma frase para o modelo identificar se há ou não violência contra mulheres.',
-        value=extracted_agression_phrase,
+        value=tweet['text'],
         label_visibility='hidden',
         )
 predict_button = predict_tab.button('Identifique!')
@@ -107,7 +110,7 @@ if predict_button:
         st.markdown(":blue[Não foi identificado] agressões contra mulheres neste texto!")
     if len(os.listdir(config.DATA_PATH_RAW_TEXTS)) > 0:
         delete_button = predict_tab.button('Remover texto')
-        if delete_button is True and text_to_predict == extracted_agression_phrase:
+        if delete_button is True and text_to_predict == tweet['text']:
             # delete_extracted_text(config.DATA_PATH_RAW_TEXTS)
             print('deletou')
 
