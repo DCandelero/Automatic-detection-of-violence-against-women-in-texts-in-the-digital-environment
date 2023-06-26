@@ -1,5 +1,6 @@
 import sys
 import os
+import webbrowser
 sys.path.append('../../')
 sys.path.append('../data_scrap')
 sys.path.append('../ml_text')
@@ -79,9 +80,15 @@ if n_of_extracted_tweets_left > 0:
             save_extracted_tweet(tweet, file_path)
         delete_extracted_tweet(last_extraction_tweets)
         st.experimental_rerun()
-extract_tab.markdown('---')
+
+if tweet['text'] != 'Extraia mais textos':
+    url = 'https://twitter.com/anyuser/status/{}'.format(tweet['id'])
+
+    if extract_tab.button('Denunciar tweet!'):
+        webbrowser.open_new_tab(url)
 
 # Section 3
+extract_tab.markdown('---')
 extract_tab.markdown('*Todos textos que possuirem violência direcionada as mulheres serão utilizadas \
     para treino do algoritmo de machine learning*')
 extract_tab.markdown('---')
