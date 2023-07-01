@@ -13,6 +13,12 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import streamlit as st
 from file_utils import get_extracted_tweets, save_extracted_tweet, get_test_or_train_path, delete_extracted_tweet
 
+def set_button_to_true(button_name:str):
+    st.session_state[button_name] = True
+
+def set_button_to_false(button_name:str):
+    st.session_state[button_name] = False
+
 # Streamlit page config
 st.set_page_config(page_title='dvaw_annotation', page_icon=':violence')
 
@@ -82,9 +88,8 @@ if n_of_extracted_tweets_left > 0:
         st.experimental_rerun()
 
 if tweet['text'] != 'Extraia mais textos':
-    url = 'https://twitter.com/anyuser/status/{}'.format(tweet['id'])
-
     if extract_tab.button('Denunciar tweet!'):
+        url = 'https://twitter.com/anyuser/status/{}'.format(tweet['id'])
         webbrowser.open_new_tab(url)
 
 # Section 3
@@ -107,19 +112,34 @@ text_to_predict = predict_tab.text_input(
         value=tweet['text'],
         label_visibility='hidden',
         )
+
+if 'predict_button' not in st.session_state:
+    st.session_state['predict_button'] = False
+
+print(st.session_state)
+
 predict_button = predict_tab.button('Identifique!')
-if predict_button:
+if predict_button or st.session_state['predict_button']:
+    set_button_to_true('predict_button')
     result = predict_text(text_to_predict)
+    st.session_state['result'] = result
     if result == 1:
-        st.markdown(":red[Foi identificado] uma ou mais agressões contra mulheres neste texto!")
-        denounce_button = predict_tab.button('Denunciar')
+        predict_tab.markdown(":red[Foi identificado] uma ou mais agressões contra mulheres neste texto!")
+        denounce_button = predict_tab.button('Denunciar tweet!', key='predict_denounce_button')
+        if denounce_button:
+            url = 'https://twitter.com/anyuser/status/{}'.format(tweet['id'])
+            webbrowser.open_new_tab(url)
     else:
-        st.markdown(":blue[Não foi identificado] agressões contra mulheres neste texto!")
-    if len(os.listdir(config.DATA_PATH_RAW_TEXTS)) > 0:
-        delete_button = predict_tab.button('Remover texto')
-        if delete_button is True and text_to_predict == tweet['text']:
-            # delete_extracted_text(config.DATA_PATH_RAW_TEXTS)
-            print('deletou')
+        predict_tab.markdown(":blue[Não foi identificado] agressões contra mulheres neste texto!")
+
+    # Tofix: Para esse botão funcionar precisa de dois cliques
+    delete_button = predict_tab.button('Próximo texto', key='predict_delete_button')
+    if delete_button:
+        was_deleted = delete_extracted_tweet(last_extraction_tweets)
+        if was_deleted:
+            set_button_to_false('predict_button')
+            st.experimental_rerun()
+
 
 
 
