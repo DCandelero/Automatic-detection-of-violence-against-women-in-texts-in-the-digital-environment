@@ -39,6 +39,8 @@ def delete_extracted_tweet(file_path:str):
         if  len(last_extracted_tweets) > 0:
             last_extracted_tweets = last_extracted_tweets.drop(0).reset_index(drop=True)
             last_extracted_tweets.to_parquet(file_path)
+            return True
+    return False
 
 def save_extracted_tweet(tweet:dict, file_path:str):
     tweet['keywords_extraction'] = list(tweet['keywords_extraction'])

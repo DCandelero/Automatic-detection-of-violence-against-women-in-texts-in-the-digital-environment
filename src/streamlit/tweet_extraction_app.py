@@ -5,7 +5,7 @@ sys.path.append('../../')
 sys.path.append('../data_scrap')
 sys.path.append('../ml_text')
 import config
-from data_scrap import extract_tweets
+from scrap_twitter_api_v2 import extract_tweets
 from predict import predict_text
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -24,31 +24,40 @@ st.set_page_config(page_title='dvaw_annotation', page_icon=':violence')
 
 # Sidebar
 st.sidebar.header('Extração de texto')
+complementary_words = []
 extract_text_option = st.sidebar.radio(
     "Como deseja extrair novos textos?",
     ['Palavras chaves (Predefinidas)', 'Frases (Predefinidas)', 'Digite'],
     index=0,
     help='A extração será feita com base nas palavras chaves, frases ou texto digitado')
 if extract_text_option == 'Palavras chaves (Predefinidas)':
-    extract_keyword = st.sidebar.multiselect(
+    search_keywords = st.sidebar.multiselect(
         label='Selecione palavras chave:',
-        options=config.OFENSIVE_WORDS,
+        options=["Todos"]+config.OFENSIVE_WORDS,
         default=config.OFENSIVE_WORDS[0])
+    if "Todos" in search_keywords:
+        search_keywords = config.OFENSIVE_WORDS
+    complementary_words = st.sidebar.multiselect(
+        label='Selecione palavras complementares:',
+        options=config.COMPLEMENTARY_SEARCH_WORDS)
 elif extract_text_option == 'Frases (Predefinidas)':
-    extract_keyword = st.sidebar.selectbox(
+    search_keywords = st.sidebar.selectbox(
         label='Selecione uma frase:',
         options=config.DEPRECIATING_PHRASES,
         index=0,)
 else:
-    extract_keyword = st.sidebar.text_input(
+    search_keywords = st.sidebar.text_input(
         label='Digite uma frase ou palavra chave',
         placeholder='Ninguém vai acreditar em você')
+    
 extract_text = st.sidebar.button('Extrair')
 if extract_text:
-    extract_tweets(extract_keyword, info_to_save='Tweet')
+    extract_tweets(search_keywords, complementary_words, info_to_save='Tweet')
+
+# Adicionar palavras complementares
 
 # Body (extract_tab) =======================================================================================================
-st.title('Análise de texto')
+# st.title('Análise de texto')
 extract_tab, predict_tab = st.tabs(['Extração e anotação', 'Predição e validação'])
 
 # Section 1
@@ -60,7 +69,8 @@ extract_tab.markdown('---')
 # Section 2
 last_extraction_tweets = os.path.join(config.DATA_PATH_WRANGLE_TWEETS, 'last_extraction_tweets.parquet')
 tweet, n_of_extracted_tweets_left = get_extracted_tweets(last_extraction_tweets)
-extract_tab.code(tweet['text'])
+extract_tab.text_area(f'Texto do tweet (Número de caracteres: {len(tweet["text"])}):', 
+                      tweet['text'])
 text_contain_vaw = extract_tab.radio(
     label='O texto acima possuí algum tipo de violência contra mulheres?',
     options =['Não', 'Somente uma parte', 'Sim', 'Descartar frase'],
