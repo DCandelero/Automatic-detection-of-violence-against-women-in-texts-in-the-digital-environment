@@ -8,10 +8,18 @@ env
 # Ignore secret files
 .env
 
-# ignore extracted files
-data/raw/images/*
-data/raw/texts/*
-data/raw/tweets/*
-data/wrangle/tweets/*
+# ignore default folders
+data/raw/*
+data/wrangle/*
 dataset/*
+models/*
+documents/*
+embeddings/*
+reports/*
 
+# do not ignore .placeholder
+!.placeholder
+
+
+# ignore temp files
+dataset_v1
