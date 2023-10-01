@@ -5,10 +5,11 @@ import config
 import pandas as pd
 import pickle
 import numpy as np
+import dataframe_image as dfi
 
 from sklearn.metrics import confusion_matrix 
 from scikitplot.metrics import plot_roc_curve, plot_precision_recall_curve
-from utils import save_results
+from utils import save_results, clear_dir
 
 import text_preprocessing as tp
 from openai_api import get_embedding
@@ -44,16 +45,27 @@ def get_train_test_embeddings(train_df:pd.DataFrame, test_df:pd.DataFrame):
 
     return train_df, test_df
 
-def train(version:str='0'):
+def train():
+    # Set new version
+    all_versions = []
+    for folder in os.listdir(config.DATA_PATH_MODELS):
+        folder_path = os.path.join(config.DATA_PATH_MODELS, folder)
+        if os.path.isdir(folder_path) and folder.startswith('v'):
+            all_versions.append(int(folder[1:]))
+    version = str(max(all_versions) + 1)
+
     # Load data
     train_df = pd.read_parquet(config.DATASET_TWEETS_TRAIN_FILE)
     test_df = pd.read_parquet(config.DATASET_TWEETS_TEST_FILE)
 
-    # prepare_data
+    # prepare_data  
     train_df = train_df.drop_duplicates(['text'])
     train_df['text_preprocessed'] = train_df['text'].apply(lambda text: tp.text_preprocessing(text))
+    train_df = train_df[train_df['text_preprocessed'] != ""]
+
     test_df = test_df.drop_duplicates(['text'])
     test_df['text_preprocessed'] = test_df['text'].apply(lambda text: tp.text_preprocessing(text))
+    test_df = test_df[test_df['text_preprocessed'] != ""]
 
     # Get embeddings
     train_df, test_df = get_train_test_embeddings(train_df, test_df)
@@ -75,11 +87,48 @@ def train(version:str='0'):
     version_folder_path = os.path.join(config.DATA_PATH_MODELS, f'v{version}')
     if not os.path.exists(version_folder_path):
         os.mkdir(version_folder_path)
+    # Save score models dataframe
+    save_file_path = os.path.join(version_folder_path, 'models_score.csv')
+    df_models_score.to_csv(save_file_path)
+    save_file_path = os.path.join(version_folder_path, 'models_predictions.csv')
+    predictions['True'] = y_test
+    predictions.to_csv(save_file_path)
+    save_file_path = os.path.join(version_folder_path, 'models_score.png')
+    dfi.export(df_models_score, save_file_path)
     
+    df_preds_proba = pd.DataFrame()
     for i in range(5):
-        current_clf = models[df_models_score.loc[i, 'Model']]
+        model_name = df_models_score.loc[i, 'Model']
+        current_clf = models[model_name]
 
-        model_path = os.path.join(version_folder_path, f'{df_models_score.loc[i, "Model"]}.pkl')
+        # calc model metrics
+        results = {'true_labels': y_test}
+        preds = predictions[model_name]
+        results['predictions'] = preds
+        cm = confusion_matrix(y_test, preds) 
+        results['cm'] = cm
+        try:
+            preds_proba = current_clf.predict_proba(x_test)
+            results['predictions_probs'] = preds_proba
+            print(preds_proba)
+            print(model_name)
+            df_preds_proba[model_name] = list(preds_proba)
+        except:
+            pass
+
+        summary_run = {
+            'model_name': model_name,
+            'version': 0,
+            'train_size': len(train_df),
+            'test_size': len(test_df)
+        }
+
+        # Save models results
+        model_results_path = os.path.join(version_folder_path, df_models_score.loc[i, "Model"])
+        save_results(results, model_results_path, summary_run)
+
+        # Save models
+        model_path = os.path.join(model_results_path, f'{df_models_score.loc[i, "Model"]}.pkl')
         with open(model_path, 'wb') as file:
             pickle.dump(current_clf, file)
 
@@ -88,27 +137,16 @@ def train(version:str='0'):
             best_model_path = os.path.join(config.DATA_PATH_MODELS, 'best.pkl')
             with open(best_model_path, 'wb') as file:
                 pickle.dump(current_clf, file)
-
-            # calc metrics
-            results = {'true_labels': y_test}
-            preds = predictions[df_models_score.loc[i, 'Model']]
-            results['predictions'] = preds
-            cm = confusion_matrix(y_test, preds) 
-            results['cm'] = cm
-            try:
-                preds_proba = current_clf.predict_proba(x_test)
-                results['predictions_probs'] = preds_proba
-            except:
-                pass
-
-            summary_run = {
-                'model_name': df_models_score.loc[i, 'Model'],
-                'version': 0,
-                'train_size': len(train_df),
-                'test_size': len(test_df)
-            }
+            
             save_file_folder = os.path.join(config.DATA_PATH_MODELS, 'best')
+            clear_dir(save_file_folder)
             save_results(results, save_file_folder, summary_run)
 
+    # Save proba predictions
+    df_preds_proba['True'] = y_test
+    save_file_path = os.path.join(version_folder_path, 'models_predictions_proba.csv')
+    df_preds_proba.to_csv(save_file_path)
+    print(df_preds_proba)
 
-train()
+if __name__ == '__main__':
+    train()
