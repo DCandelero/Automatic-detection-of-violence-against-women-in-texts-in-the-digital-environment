@@ -6,7 +6,7 @@ OFENSIVE_WORDS = ["Amante", "Arregona", "Atirada", "Baranga", "Bruxa", "Burra", 
                   "Chora", "Covarde", "Desastrada", "Desorganizada", "Doida", "Egoista", "Esquisita", 
                   "Estupida", "Falsa", "Farsante", "Feminazi", "Fraca", "Gorda", "Hipocrita", "Histerica", 
                   "Idiota", "Incapaz", "Interesseira", "Jumenta", "Lacraia", "Lerda", "Louca", 
-                  "Mal comida", "Manipuladora", "Mentirosa", "Merda", "Mocreia", "Mulher de malandro", 
+                  "Manipuladora", "Mentirosa", "Merda", "Mocreia", 
                   "Nojenta", "Oferecida", "Passada", "Peppa Pig", "Piranha", "Piriguete", "Porca", "Preguiçosa", 
                   "Promiscua", "Puta", "Ridicula", "Rodada", "Vaca" ,"Vadia", "Vagabunda", 
                   "Velha", "Vergonha"]
@@ -16,7 +16,7 @@ DEPRECIATING_PHRASES = ['Você não é capaz', 'Tinha que ser mulher',
                         'Cuidado com o que fala', 'Vai cozinhar', 'Vai lavar louça', 
                         'Deve ser TPM', 'Ser mulher é fácil', 'Lugar de mulher é', 
                         'A culpa é sua', 'Ela tava pedindo', 'Mal comida', 'Vira homem', 
-                        'Mal amada']
+                        'Mal amada', "Mulher de malandro"]
 COMPLEMENTARY_SEARCH_WORDS = ['a', 'mulher', 'sua', 'toda']
 
 # Query parameters
@@ -53,6 +53,8 @@ DATASET_TWEETS = DATASET_PATH / 'tweets'
 DATASET_TWEETS_TRAIN_FILE = DATASET_TWEETS / 'train.parquet'
 DATASET_TWEETS_TEST_FILE = DATASET_TWEETS / 'test.parquet'
 DATA_PATH_RAW_TWEETS_V1 = DATA_PATH_RAW / 'tweets_v1'
+DATA_PATH_RAW_TWEETS_V2 = DATA_PATH_RAW / 'tweets_v2'
+DATASET_TWEETS_VAW = DATASET_PATH / 'vaw_tweets'
 
 # Embeddings
 EMBEDDINGS_PATH = PROJ_PATH / 'embeddings'
