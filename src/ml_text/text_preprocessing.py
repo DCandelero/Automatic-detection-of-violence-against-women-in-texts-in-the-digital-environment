@@ -41,7 +41,8 @@ def abbreviationsReplace(text, abbrv_dict:dict={}):
                 "pq": "porque",
                 " q ": " que ",
                 " c ": " com ",
-                " p ": " pra "
+                " p ": " pra ",
+                "vtnc": "vai tomar no cu"
                 }
 
     for i, j in abbrv_dict.items():
