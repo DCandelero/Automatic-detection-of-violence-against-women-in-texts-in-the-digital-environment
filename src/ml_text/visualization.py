@@ -105,8 +105,8 @@ def make_confusion_matrix(cf,
     cm_plot = sns.heatmap(cf,annot=box_labels,fmt="",cmap=cmap,cbar=cbar,xticklabels=categories,yticklabels=categories)
 
     if xyplotlabels:
-        plt.ylabel('True label')
-        plt.xlabel('Predicted label' + stats_text)
+        plt.ylabel('Rótulo real')
+        plt.xlabel('Rótulo identificado' + stats_text)
     else:
         plt.xlabel(stats_text)
     
